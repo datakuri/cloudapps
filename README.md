@@ -1,2 +1,2 @@
 # cloudapps
-Deployment of Cloud Resources with CI/CD process. 
+Deployment of Cloud Resources with CI/CD pipelines. 
