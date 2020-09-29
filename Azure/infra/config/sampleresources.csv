@@ -1,1 +1,2 @@
 Subscription,AppName,Service_or_resource_type,service_short_code,region,region_short_code,Env_code,Resource_name,Resource_group_name,ARM_Template,ARM_Template_Param,Tags
+"subscrip001",AppTestRide,"Resource Group","rg","US East","use","" 
