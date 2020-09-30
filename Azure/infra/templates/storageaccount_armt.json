@@ -1,0 +1,116 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountObject": {
+            "type": "object",
+            "metadata":{
+                "description": "Storage Account Definition"
+            }
+        }
+    },
+    "variables": {
+        "containersLookup": {
+            "true": "[parameters('storageAccountObject').containers]",
+            "false": [
+                {
+                    "name":"empty"
+                }
+            ]
+        },
+        "containers":"[variables('containersLookup')[string(greater(length(parameters('storageAccountObject').containers),0))]]",
+        "privateLinkLookup": {
+              "true": "[parameters('storageAccountObject').privatelink]",
+            "false": [
+                {
+                    "groupId": [
+                          "empty"  
+                    ],
+                    "privateLinkSubnetID":"empty"
+                }
+            ]
+        },
+        "privateLink": "[variables('privateLinkLookup')[string(greater(length(parameters('storageAccountObject').privatelink.groupId),0))]]"
+    },
+    "resources": [
+        {
+            "name": "[parameters('storageAccountObject').storageAccountName]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2018-07-01",
+            "tags": "[resourceGroup().tags]",
+            "sku": {
+                "name": "[parameters('storageAccountObject').storageAccountType]"
+            },
+            "kind": "[parameters('storageAccountObject').storageAccountKind]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "networkAcls": {
+                    "bypass": "[parameters('storageAccountObject').bypass]",
+                    "defaultAction": "[parameters('storageAccountObject').defaultAction]",
+                    "ipRules": "[parameters('storageAccountObject').ipRules]"
+                },
+                "isHnsEnabled": "[parameters('storageAccountObject').isHnsEnabled]",
+                "supportsHttpsTrafficOnly": "[parameters('storageAccountObject').supportsHttpsTrafficOnly]",
+                "accessTier": "[parameters('storageAccountObject').accessTier]",
+                "allowBlobPublicAccess": "[parameters('storageAccountObject').allowBlobPublicAccess]",
+                "minimumTlsVersion": "[parameters('storageAccountObject').minimumTlsVersion]"
+            }
+        },
+        {
+            "condition": "[greater(length(parameters('storageAccountObject').containers),0)]",
+            "copy":{
+                "name": "containercopy",
+                "count": "[length(variables('containers'))]",
+                "mode": "parallel"
+            },
+            "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
+            "apiVersion": "2018-03-01-preview",
+            "name": "[concat(parameters('storageAccountObject').storageAccountName,'/default/',variables('containers')[copyIndex('containercopy')].name)]",
+            "dependsOn": [
+                "[parameters('storageAccountObject').storageAccountName]"
+            ],
+            "properties": {
+                "publicaccess": "None"
+            }
+            
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "copy": {
+                "count": "[length(variables('privateLink').groupId)]",
+                "name": "copyendpoints"
+            },
+            "condition": "[greater(length(parameters('storageAccountObject').privatelink.groupId),0)]",
+            "apiVersion": "2019-09-01",
+            "name": "[concat('prend-',parameters('storageAccountObject').storageAccountName,'-',variables('privateLink').groupId[copyIndex()])]",
+            "dependsOn": [
+                "[parameters('storageAccountObject').storageAccountName]"
+            ],
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[concat('prlink-',parameters('storageAccountObject').storageAccountName,'-',variables('privateLink').groupId[copyIndex()])]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccountObject').storageAccountName)]",
+                            "groupIds": [
+                                "[variables('privateLink').groupId[copyIndex()]]"
+                            ]
+                        }
+                    }
+                ],
+                "manualPrivateLinkServiceConnections": [],
+                "subnet": {
+                    "id": "[variables('privateLink').privateLinkSubnetID]"
+                }    
+            }
+
+        }
+    ],
+    "outputs": {
+        "Name": {
+            "type": "string",
+            "value": "[parameters('storageAccountObject').storageAccountName]"
+        }
+    }
+}

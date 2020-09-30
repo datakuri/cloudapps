@@ -1,0 +1,36 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountObject": {
+            "type": "object",
+            "value": {
+                "storageAccountName": "nameazuresaadlsg2",
+                "StorageAccountType": "Standard_RAGRS",
+                "kind": "StorageV2",
+                "defaultAction": "deny",
+                "supportsHttpsTrafficOnly": true,
+                "accessTier": "Hot",
+                "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": false,
+                "networkAclsBypass": "AzureServices",
+                "networkAclsDefaultAction": "Deny",
+                "isHnsEnabled": "true",
+                "containers": [
+                    {
+                        "name": "test"
+                    }
+                ],
+                "bypass": "AzureServices",
+                "privateLink" : {
+                    "groupId":[
+                        "dfs",
+                        "blob"        
+                    ],
+                    "privateLinkSubnetID": "/SUBNET RESOURCE ID"
+                }
+
+            }
+        }
+    }
+}

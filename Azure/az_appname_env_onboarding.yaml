@@ -1,5 +1,19 @@
 variables:
+  RESOURCE_GROUP: rg-appid-dev
 
 trigger:
+  - master
 
-pool:
+#pool:
+
+steps:
+
+
+  - task: Onboard_Azure_Resources
+    displayName: Onboard Azure Resources for App Id in Dev
+    inputs:
+      azureSubscription: AZ_SUBSCRIPTION_ARM_CONNECTION
+
+
+
+
